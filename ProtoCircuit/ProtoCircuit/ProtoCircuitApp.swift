@@ -25,6 +25,7 @@ struct MyApp: App {
         WindowGroup {
             MainTabView()
                 .environment(\.managedObjectContext, persistence.container.viewContext)
+                .preferredColorScheme(colorScheme)
         }
     }
 }
