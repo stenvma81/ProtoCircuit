@@ -10,10 +10,20 @@ import SwiftUI
 @main
 struct MyApp: App {
     let persistence = PersistenceController.shared
+    
+    @AppStorage("appColorScheme") private var appColorScheme: String = "system"
+
+    var colorScheme: ColorScheme? {
+        switch appColorScheme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
                 .environment(\.managedObjectContext, persistence.container.viewContext)
         }
     }
