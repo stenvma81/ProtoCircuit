@@ -24,6 +24,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-        }
+        }.tabViewStyle(.page)           // << enable swipeable pages
+        .indexViewStyle(.page(backgroundDisplayMode: .always))  // o
     }
 }
