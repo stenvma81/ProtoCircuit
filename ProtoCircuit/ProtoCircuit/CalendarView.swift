@@ -9,6 +9,16 @@ import SwiftUI
 
 struct CalendarView: View {
     @State private var currentDate = Date()
+    
+    @Environment(\.managedObjectContext) private var context
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Note.dateCreated, ascending: true)],
+        animation: .default
+    ) private var allNotes: FetchedResults<Note>
+
+    @State private var selectedDate: Date? = nil
+    @State private var showingNotesSheet = false
 
     var body: some View {
         NavigationStack {
@@ -21,7 +31,16 @@ struct CalendarView: View {
             .padding()
             .navigationTitle("Calendar")
         }
+        .sheet(isPresented: $showingNotesSheet) {
+            if let selectedDate {
+                DayNotesListView(
+                    date: selectedDate,
+                    notes: notesFor(date: selectedDate)
+                )
+            }
+        }
     }
+
 
     // MARK: - Header with month + arrows
     private var header: some View {
@@ -57,18 +76,42 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - Grid of days
     private var monthGrid: some View {
         let days = generateDays(for: currentDate)
+        let columns = Array(repeating: GridItem(.flexible()), count: 7)
 
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
+        return LazyVGrid(columns: columns, spacing: 10) {
             ForEach(days, id: \.self) { date in
-                Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.body)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .padding(6)
-                    .background(isToday(date) ? Color.blue.opacity(0.2) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                let today = isToday(date)
+                let notes = notesFor(date: date)
+                let hasNotes = !notes.isEmpty
+
+                VStack(spacing: 4) {
+                    // Day number
+                    Text("\(Calendar.current.component(.day, from: date))")
+                        .font(.body)
+                        .frame(maxWidth: .infinity)
+                        .padding(6)
+                        .background(today ? Color.blue.opacity(0.25) : Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                    // Notes indicator (dot)
+                    if hasNotes {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 6, height: 6)
+                    } else {
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 6, height: 6)
+                    }
+                }
+                .onTapGesture {
+                    if hasNotes {
+                        selectedDate = date
+                        showingNotesSheet = true
+                    }
+                }
             }
         }
     }
@@ -98,5 +141,15 @@ struct CalendarView: View {
             calendar.date(byAdding: .day, value: offset, to: firstWeek.start)
         }
     }
-
+    
+    private func notesFor(date: Date) -> [Note] {
+        let calendar = Calendar.current
+        return allNotes.filter { note in
+            if let created = note.dateCreated {
+                return calendar.isDate(created, inSameDayAs: date)
+            }
+            return false
+        }
+    }
 }
+
