@@ -8,23 +8,35 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @State private var selectedTab: AppTab = .home
+    @State private var showingNewNote = false
+
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
+        ZStack(alignment: .bottom) {
+
+            // Main content changes depending on selected tab
+            Group {
+                switch selectedTab {
+                case .home:
+                    HomeView()
+                case .calendar:
+                    CalendarView()
+                case .notes:
+                    NotesListView()
+                case .settings:
+                    SettingsView()
                 }
-            
-            CalendarView()
-                .tabItem {
-                    Label("Calendar", systemImage: "calendar")
-                }
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-        }.tabViewStyle(.page)           // << enable swipeable pages
-        .indexViewStyle(.page(backgroundDisplayMode: .always))  // o
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea(.keyboard)  // prevent jumps
+
+            // Custom Tab Bar
+            CustomTabBar(selectedTab: $selectedTab) {
+                showingNewNote = true       // FAB action
+            }
+        }
+        .sheet(isPresented: $showingNewNote) {
+            NewNoteView()
+        }
     }
 }
