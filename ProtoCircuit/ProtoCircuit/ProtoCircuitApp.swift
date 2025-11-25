@@ -12,6 +12,7 @@ struct MyApp: App {
     let persistence = PersistenceController.shared
     
     @AppStorage("appColorScheme") private var appColorScheme: String = "system"
+    @StateObject private var health = HealthManager.shared
 
     var colorScheme: ColorScheme? {
         switch appColorScheme {
@@ -26,6 +27,13 @@ struct MyApp: App {
             MainTabView()
                 .environment(\.managedObjectContext, persistence.container.viewContext)
                 .preferredColorScheme(colorScheme)
+                .environmentObject(health)
+                .task {
+                    try? await health.requestAuthorization()
+                    await health.fetchStepsToday()
+                    await health.fetchActiveEnergyToday()
+                    await health.fetchWorkoutsToday()
+                }
         }
     }
 }

@@ -1,18 +1,15 @@
 //
-//  DashBoardView.swift
+//  DashboardView.swift
 //  ProtoCircuit
 //
-//  Created by Matti Stenvall on 25.11.2025.
+//  Created by Matti Stenvall on 16.11.2025.
 //
 
 import SwiftUI
+import HealthKit
 
 struct DashboardView: View {
-    // Mock data placeholders
-    @State private var stepsToday = 8423
-    @State private var activeEnergy = 527
-    @State private var hevyWorkoutToday = "Upper Body Push"
-    @State private var notesToday = 2
+    @EnvironmentObject var health: HealthManager
     
     var body: some View {
         NavigationStack {
@@ -20,11 +17,8 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     
                     header
-                    
                     summaryCards
-                    
-                    recentWorkoutCard
-                    
+                    workoutSection
                     notesCard
                     
                 }
@@ -34,21 +28,22 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Header
+    // MARK: - HEADER
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Today")
                 .font(.largeTitle.bold())
+            
             Text(Date().formatted(date: .long, time: .omitted))
                 .foregroundColor(.secondary)
         }
     }
     
-    // MARK: - Summary Stack
+    // MARK: - SUMMARY CARDS (STEPS + ENERGY)
     private var summaryCards: some View {
         HStack(spacing: 16) {
-            statCard(title: "Steps", value: "\(stepsToday)")
-            statCard(title: "Active kcal", value: "\(activeEnergy)")
+            statCard(title: "Steps", value: "\(health.stepsToday)")
+            statCard(title: "Active kcal", value: "\(health.activeEnergyToday)")
         }
     }
     
@@ -66,31 +61,67 @@ struct DashboardView: View {
         .cornerRadius(16)
     }
     
-    // MARK: - Hevy workout
-    private var recentWorkoutCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    // MARK: - WORKOUTS
+    private var workoutSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Today's Workout")
                 .font(.headline)
             
-            HStack {
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.system(size: 30))
-                VStack(alignment: .leading) {
-                    Text(hevyWorkoutToday)
-                        .font(.body.bold())
-                    Text("Logged in Hevy")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                }
-                Spacer()
+            if let workout = health.workoutsToday.first {
+                workoutCard(workout)
+            } else {
+                noWorkoutCard
             }
-            .padding()
-            .background(.thinMaterial)
-            .cornerRadius(16)
         }
     }
     
-    // MARK: - Notes
+    private var noWorkoutCard: some View {
+        HStack {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.system(size: 30))
+                .foregroundColor(.gray.opacity(0.6))
+            
+            VStack(alignment: .leading) {
+                Text("No workouts logged today")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                Text("Log a workout in Hevy or Apple Fitness")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+        }
+        .padding()
+        .background(.thinMaterial)
+        .cornerRadius(16)
+    }
+    
+    private func workoutCard(_ workout: HKWorkout) -> some View {
+        HStack {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.system(size: 30))
+            
+            VStack(alignment: .leading) {
+                Text(workout.workoutActivityType.name)
+                    .font(.body.bold())
+                
+                Text("Duration: \(Int(workout.duration / 60)) min")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("From Hevy / Apple Health")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding()
+        .background(.thinMaterial)
+        .cornerRadius(16)
+    }
+    
+    // MARK: - NOTES PLACEHOLDER (REAL NOTES WILL COME BACK AFTER CORE DATA FIX)
     private var notesCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Your Notes Today")
@@ -99,13 +130,33 @@ struct DashboardView: View {
             HStack {
                 Image(systemName: "note.text")
                     .font(.system(size: 26))
-                Text("\(notesToday) notes")
-                    .font(.body)
+                Text("Notes integration coming soon")
+                    .foregroundColor(.secondary)
                 Spacer()
             }
             .padding()
             .background(.thinMaterial)
             .cornerRadius(16)
+        }
+    }
+}
+
+// MARK: - EXTENSION TO GET FRIENDLY WORKOUT NAMES
+extension HKWorkoutActivityType {
+    var name: String {
+        switch self {
+        case .functionalStrengthTraining:
+            return "Strength Training"
+        case .running:
+            return "Running"
+        case .walking:
+            return "Walking"
+        case .cycling:
+            return "Cycling"
+        case .traditionalStrengthTraining:
+            return "Strength Training"
+        default:
+            return "Workout"
         }
     }
 }
