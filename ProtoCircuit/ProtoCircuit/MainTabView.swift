@@ -18,7 +18,7 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    HomeView()
+                    DashboardView()
                 case .calendar:
                     CalendarView()
                 case .notes:
